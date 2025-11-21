@@ -96,8 +96,8 @@ def get_system_pythonpaths() -> list[str]:
         # run as normal normal user if on linux to also include user python paths
         proc = subprocess.run(["python3" if localplatform.ON_LINUX else "python", "-c", "import sys; print('\\n'.join(x for x in sys.path if x))"],
         # TODO make this less insane
-                              capture_output=True, user=localplatform.localplatform._get_user_id() if localplatform.ON_LINUX else None, env={} if localplatform.ON_LINUX else None) # pyright: ignore [reportPrivateUsage]
-        
+                              capture_output=True, user=localplatform.localplatform._get_user_id() if localplatform.ON_LINUX else None, env=os.environ if localplatform.ON_LINUX else None) # pyright: ignore [reportPrivateUsage]
+
         proc.check_returncode()
 
         versions = [x.strip() for x in proc.stdout.decode().strip().split("\n")]

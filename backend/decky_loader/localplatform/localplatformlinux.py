@@ -11,7 +11,7 @@ logger = logging.getLogger("localplatform")
 # subprocess._ENV
 ENV = Mapping[str, str]
 ProcessIO = int | IO[Any] | None
-async def run(args: list[str], stdin: ProcessIO = DEVNULL, stdout: ProcessIO = PIPE, stderr: ProcessIO = PIPE, env: ENV | None = {"LD_LIBRARY_PATH": ""}) -> tuple[Process, bytes | None, bytes | None]:
+async def run(args: list[str], stdin: ProcessIO = DEVNULL, stdout: ProcessIO = PIPE, stderr: ProcessIO = PIPE, env: ENV | None = os.environ) -> tuple[Process, bytes | None, bytes | None]:
     proc = await create_subprocess_exec(args[0], *(args[1:]), stdin=stdin, stdout=stdout, stderr=stderr, env=env)
     proc_stdout, proc_stderr = await proc.communicate()
     return (proc, proc_stdout, proc_stderr)
@@ -73,8 +73,8 @@ def chmod(path : str, permissions : int, recursive : bool = True) -> bool:
         octal_permissions = int(str(permissions), 8)
 
         if recursive:
-            for root, dirs, files in os.walk(path):  
-                for d in dirs:  
+            for root, dirs, files in os.walk(path):
+                for d in dirs:
                     os.chmod(os.path.join(root, d), octal_permissions)
                 for d in files:
                     os.chmod(os.path.join(root, d), octal_permissions)
@@ -95,7 +95,7 @@ def file_owner(path : str) -> UserType|None:
         return UserType.EFFECTIVE_USER
 
     else:
-        return None 
+        return None
 
 def get_home_path(user : UserType = UserType.HOST_USER) -> str:
     user_name = "root"
@@ -124,7 +124,7 @@ def setgid(user : UserType = UserType.HOST_USER):
         pass # we already are
     else:
         raise Exception("Unknown user type")
-    
+
     os.setgid(user_id)
 
 def setuid(user : UserType = UserType.HOST_USER):
@@ -136,7 +136,7 @@ def setuid(user : UserType = UserType.HOST_USER):
         pass # we already are
     else:
         raise Exception("Unknown user type")
-    
+
     os.setuid(user_id)
 
 async def service_active(service_name : str) -> bool:
@@ -194,15 +194,15 @@ def _parent_dir(path : str | None) -> str | None:
 
     if path.endswith('/'):
         path = path[:-1]
-    
+
     return os.path.dirname(path)
 
 def get_unprivileged_path() -> str:
     path = os.getenv("UNPRIVILEGED_PATH")
-    
+
     if path == None:
         path = _parent_dir(os.getenv("PLUGIN_PATH"))
-    
+
     if path == None:
         logger.debug("Unprivileged path is not properly configured. Making something up!")
 
@@ -219,7 +219,7 @@ def get_unprivileged_path() -> str:
     if path == None:
         logger.warning("Unprivileged path is not properly configured. Defaulting to /home/deck/homebrew")
         path = "/home/deck/homebrew" # We give up
-    
+
     os.makedirs(path, exist_ok=True)
 
     return path
@@ -237,7 +237,7 @@ def get_unprivileged_user() -> str:
             if dir.startswith(os.path.realpath(pw.pw_dir)):
                 user = pw.pw_name
                 break
-    
+
     if user == None:
         logger.warning("Unprivileged user is not properly configured. Defaulting to 'deck'")
         user = 'deck'
@@ -261,7 +261,7 @@ async def close_cef_socket():
             return
 
         lsof_data = cef_socket_lsof_regex.match(stdout.decode())
-        
+
         if not lsof_data:
             logger.error("lsof regex match failed in close_cef_socket!")
             return
